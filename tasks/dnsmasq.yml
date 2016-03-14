@@ -1,0 +1,24 @@
+- name: update apt
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == 'Debian'
+
+- name: install deps
+  apt:
+    pkg: dnsmasq
+    state: installed
+  when: ansible_os_family == 'Debian'
+
+- name: install deps
+  yum:
+    pkg: dnsmasq
+    state: installed
+  when: ansible_os_family == 'RedHat'
+
+- name: configure dnsmasq
+  copy:
+    content: 'server=/{{ consul_domain }}/127.0.0.1#8600'
+    dest: '/etc/dnsmasq.d/10-consul'
+  notify:
+    - restart dnsmasq

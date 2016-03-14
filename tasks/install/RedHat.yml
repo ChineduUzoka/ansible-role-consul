@@ -1,0 +1,9 @@
+---
+- name: install deps
+  yum:
+    pkg: "{{item}}"
+    state: installed
+  with_items:
+    - unzip
+    - jq
+

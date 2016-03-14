@@ -1,0 +1,22 @@
+- name: download consul template
+  get_url:
+    url: "{{consul_template_download}}"
+    dest: "{{consul_download_folder}}"
+  register: consul_template_was_downloaded
+
+- name: copy and unpack consul template
+  unarchive:
+    src: "{{ consul_download_folder }}/{{ consul_template_archive }}"
+    dest: "{{ consul_home }}/bin"
+    copy: no
+  when: consul_template_was_downloaded|changed
+
+- name: set ownership for consul template
+  file:
+    state: directory
+    path: "{{consul_home}}/bin"
+    owner: "{{consul_user}}"
+    group: "{{consul_group}}"
+    recurse: yes
+  when: consul_template_was_downloaded|changed
+

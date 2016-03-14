@@ -1,0 +1,47 @@
+---
+# Configure Consul 
+
+- name: create TLS key
+  no_log: True
+  copy: content="{{ consul_tls_key }}" dest="{{ consul_key_file }}" owner="{{consul_user}}" group="{{consul_group}}"
+  notify: 
+    - reload consul
+  when: consul_tls_key is defined
+
+- name: create TLS cert
+  no_log: True
+  copy: content="{{ consul_tls_cert }}" dest="{{ consul_cert_file }}" owner="{{consul_user}}" group="{{consul_group}}"
+  notify: 
+    - reload consul
+  when: consul_tls_cert is defined
+
+- name: create TLS root CA cert
+  no_log: True
+  copy: content="{{ consul_tls_ca_cert }}" dest="{{ consul_ca_file }}" owner="{{consul_user}}" group="{{consul_group}}"
+  notify: 
+    - reload consul
+  when: consul_tls_ca_cert is defined
+
+- name: copy consulkv script
+  template: 
+    src: "consulkv.j2"
+    dest: "{{consul_home}}/bin/consulkv"
+    owner: "{{consul_user}}"
+    group: "{{consul_group}}"
+    mode: "0755"
+
+- name: consul config file
+  template: 
+    src: "consul.json.j2"
+    dest: "{{ consul_config_file }}"
+    owner: "{{consul_user}}"
+    group: "{{consul_group}}"
+    mode: 0755
+  notify: 
+    - reload consul
+
+- include: config-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- include: config-RedHat.yml
+  when: ansible_os_family == 'RedHat'

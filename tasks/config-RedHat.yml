@@ -1,0 +1,21 @@
+---
+- name: copy consul systemv script
+  template: 
+    src: 'consul-init.j2'
+    dest: '/etc/init.d/consul'
+    owner: '{{ consul_user }}'
+    group: '{{ consul_group }}'
+    mode: 0755
+  notify:
+    - restart consul
+
+- name: add consul sysconfig file
+  template:
+    src: 'consul-sysconf.j2'
+    dest: '/etc/sysconfig/consul'
+    owner: '{{ consul_user }}'
+    group: '{{ consul_group }}'
+    mode: 0644
+  notify:
+    - restart consul
+     

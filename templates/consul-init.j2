@@ -1,0 +1,110 @@
+#!/bin/bash
+#
+# consul		This shell script takes care of starting and stopping
+#		consul (NTPv4 daemon).
+#
+# chkconfig: - 58 74
+# description: consul is the NTPv4 daemon. \
+# The Network Time Protocol (NTP) is used to synchronize the time of \
+# a computer client or server to another server or reference time source, \
+# such as a radio or satellite receiver or modem.
+
+### BEGIN INIT INFO
+# Provides: consul
+# Required-Start: $network $local_fs $remote_fs
+# Required-Stop: $network $local_fs $remote_fs
+# Should-Start: $syslog $named consulate
+# Should-Stop: $syslog $named
+# Short-Description: start and stop consul
+# Description: Consul is a tool for discovering and configuring services in your 
+#              infrastructure
+### END INIT INFO
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source configuration.
+if [ -f /etc/sysconfig/consul ] ; then
+  . /etc/sysconfig/consul
+fi
+
+prog=consul
+exec="{{ consul_home }}/bin/$prog"
+
+# 
+configfile="-config-file=${CONSUL_CONFIG_FILE:-/opt/consul/etc/consul.yml}"
+pidfile="-pid-file=${CONSUL_PID_FILE:=/var/run/consul.pid}"
+datadir="-data-dir=${CONSUL_DATA_DIR:-/var/cache/consul}"
+user=${CONSUL_USER:-consul}
+group=${CONSUL_GROUP:-consul}
+lockfile=/var/lock/subsys/$prog
+logfile=${CONSUL_LOG_FILE:-/dev/null}
+#OPTIONS="$configfile $pidfile $datadir"
+OPTIONS="$configfile $datadir"
+
+# Only root can start/stop this service
+[ "$EUID" != "0" ] && exit 4
+
+# A non-root user is required to run the consul service
+_UID=$(getent passwd consul| awk -F: '{print $3}') || exit 4
+
+start() {
+	[ "$_UID" == "0" ] && exit 4
+	[ -x $exec ] || exit 5
+
+        # Start daemons.
+        echo -n $"Starting $prog: "
+        touch $CONSUL_PID_FILE && chown $user:$group $CONSUL_PID_FILE
+        if [ "$logfile" != '/dev/null' ] ; then
+          touch $logfile && chown $user:$group $logfile
+        fi
+{% if consul_is_server %}
+        daemon --pidfile $CONSUL_PID_FILE --user $user "nohup $exec agent -server $OPTIONS -syslog > $logfile 2>&1 &"
+{% else %}
+        daemon --pidfile $CONSUL_PID_FILE --user $user "nohup $exec agent $OPTIONS -syslog > $logfile 2>&1 &"
+{% endif %}
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch $lockfile
+	return $RETVAL
+}
+
+stop() {
+	[ "$EUID" != "0" ] && exit 4
+        echo -n $"Shutting down $prog: "
+	killproc $prog
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f $lockfile
+	return $RETVAL
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+	status $prog
+	;;
+  restart|force-reload)
+	stop
+	start
+	;;
+  try-restart|condrestart)
+	if status $prog > /dev/null; then
+	    stop
+	    start
+	fi
+	;;
+  reload)
+        echo -n $"Reloading $prog: "
+        killproc -p $CONSUL_PID_FILE $exec -HUP
+        RETVAL=$?
+        echo
+	;;
+  *)
+	echo "Usage: $0 {start|stop|status|restart|try-restart|force-reload}"
+	exit 2
+esac

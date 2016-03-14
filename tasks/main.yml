@@ -1,0 +1,6 @@
+---
+- include: install.yml
+- include: config.yml
+- { include: consul-template.yml, when: consul_install_template == true }
+- { include: dnsmasq.yml, when: consul_install_dnsmasq == true }
+- include: service.yml
