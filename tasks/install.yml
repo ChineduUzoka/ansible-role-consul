@@ -8,7 +8,7 @@
   
 - name: download consul
   get_url: 
-    urli: "{{consul_download}}"
+    url: "{{consul_download}}"
     dest: "{{consul_download_folder}}"
   register: consul_was_downloaded
 
