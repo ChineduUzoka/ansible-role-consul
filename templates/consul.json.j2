@@ -2,8 +2,11 @@
 {% if consul_is_ui == true %}
   "ui_dir": "{{ consul_home }}/dist",
 {% endif %}
-{% if consul_join_at_start is defined and consul_join_at_start %}
+{% if (consul_join_at_start is defined and consul_join_at_start) and (consul_retry_join is not defined or not  consul_retry_join) %}
   "start_join": {{ consul_servers|to_nice_json }},
+{% endif %}
+{% if consul_retry_join is defined and consul_retry_join %}
+  "retry_join": {{ consul_servers|to_nice_json }},
 {% endif %}
 {% if consul_disable_remote_exec is defined and consul_disable_remote_exec %}
   "disable_remote_exec": {{ "true" if consul_disable_remote_exec else "false" }},

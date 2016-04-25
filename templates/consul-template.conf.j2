@@ -1,0 +1,19 @@
+# Consul Template (Upstart unit)
+description "Consul Template"
+start on (local-filesystems and net-device-up IFACE!=lo)
+stop on runlevel [06]
+
+env CONSUL={{consul_home}}/bin/consul-template
+env CONFIG={{ consul_template_config_dir }}
+
+
+script
+    exec $CONSUL -config $CONFIG/config {{ consul_template_extra_options }}
+end script
+
+setuid {{ consul_user }}
+setgid {{ consul_group }}
+
+respawn
+respawn limit 10 10
+kill timeout 10

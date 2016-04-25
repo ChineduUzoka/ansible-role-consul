@@ -5,3 +5,7 @@
   action: service name=consul state=reloaded
 - name: restart dnsmasq
   service: name=dnsmasq state=restarted enabled=yes
+- name: restart consul-template
+  action: service name=consul-template state=restarted
+- name: reload consul-template
+  action: service name=consul-template state=reloaded

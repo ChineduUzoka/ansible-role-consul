@@ -1,0 +1,10 @@
+---
+- name: copy consul template upstart script
+  template:
+    src: consul-template.conf.j2
+    dest: /etc/init/consul-template.conf
+    owner: "{{consul_user}}"
+    group: "{{consul_group}}"
+    mode: 0755
+  notify:
+    reload consul-template

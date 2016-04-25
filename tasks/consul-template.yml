@@ -11,12 +11,38 @@
     copy: no
   when: consul_template_was_downloaded|changed
 
-- name: set ownership for consul template
+- name: create config dir
   file:
     state: directory
-    path: "{{consul_home}}/bin"
+    path: "{{ item }}"
     owner: "{{consul_user}}"
     group: "{{consul_group}}"
     recurse: yes
   when: consul_template_was_downloaded|changed
+  with_items: 
+    - "{{ consul_template_config_dir }}"
+    - "{{ consul_template_config_dir }}/config"
 
+- name: consul-template config file
+  template:
+    src: "consul-template.json.j2"
+    dest: "{{ consul_template_config_dir }}/config/"
+    owner: "{{consul_user}}"
+    group: "{{consul_group}}"
+    mode: 0755
+  notify:
+    - reload consul
+
+
+- include: consul-template/config-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+  
+- include: consul-template/config-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- service:
+    name: consul-template
+    state: running
+    enabled: yes
+
+ 
